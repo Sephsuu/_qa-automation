@@ -132,11 +132,6 @@ class Test_Account_Overview:
             last_6_months_button.click()
         else:
             print(f"Found button but label is '{label_span.text.strip()}', not 'Last 6 months'.")
-            
-        # Wait for orders to load
-        WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, 'li.flex.flex-col.flex-wrap.items-start.justify-between.gap-y-3.border'))
-        )
         
         # Click the "Last 3 months" button
         last_3_months_button = WebDriverWait(driver, 10).until(
@@ -146,12 +141,11 @@ class Test_Account_Overview:
             ))
         )
         print("Clicking 'Last 3 months' button...")
-        print(f"Found {len(order_items)} orders in the last 3 months:")
         last_3_months_button.click()
 
-        time.sleep(1)  
+        time.sleep(5)  
 
-        
+        self.populate_order(driver, section='last_3_months')
 
         last_3_months_button = WebDriverWait(driver, 10).until(
             EC.element_to_be_clickable((
@@ -174,7 +168,7 @@ class Test_Account_Overview:
         time.sleep(3)
 
         self.populate_order(driver)
-        
+
         # Wait for the parent div container that wraps the pagination controls
         pagination_div = WebDriverWait(driver, 10).until(
             EC.visibility_of_element_located((By.CSS_SELECTOR, "div.flex.items-center.justify-center.gap-6"))
@@ -189,54 +183,107 @@ class Test_Account_Overview:
         # Extract active page number (before ' of ')
         active_page = page_text.split(" of ")[0]
         print(f"Current active page: {active_page}")
+
+
         
         print("\n" + "=" * 80)
         print("Order verification completed.")
 
-    def populate_order(self, driver):
-        # Find all order items
-        order_items = driver.find_elements(By.CSS_SELECTOR, 'li.flex.flex-col.flex-wrap.items-start.justify-between.gap-y-3.border.border-\\[\\#C7BFB9\\].bg-white.p-6')
+    def populate_order(self, driver, section=''):
+        print(section)
         
-        # Loop through each order and extract values
-        for index, order_item in enumerate(order_items, 1):
-            print(f"\nOrder {index}:")
-            print("-" * 40)
-            
-            # Order Number
-            order_number_label = order_item.find_element(By.CSS_SELECTOR, 'p.mb-1.text-sm.font-medium.leading-normal')
-            order_number_value = order_item.find_element(By.CSS_SELECTOR, 'p.pl-1.text-sm.font-medium.leading-normal.text-\\[\\#1d1d1b\\]')
-            print(f"Order Number Label: {order_number_label.text.strip()}")
-            print(f"Order Number Value: {order_number_value.text.strip()}")
-            
-            # View Order Link
-            view_order_link = order_item.find_element(By.CSS_SELECTOR, 'a.text-sm.underline[data-discover="true"]')
-            print(f"View Order Link Text: {view_order_link.text.strip()}")
-            print(f"View Order Link Href: {view_order_link.get_attribute('href')}")
-            
-            # Status
-            status_elements = order_item.find_elements(By.CSS_SELECTOR, 'div.order-3.flex.w-20 p')
-            if len(status_elements) >= 2:
-                status_label = status_elements[0]
-                status_value = status_elements[1]
-                print(f"Status Label: {status_label.text.strip()}")
-                print(f"Status Value: {status_value.text.strip()}")
-            
-            # Date
-            date_element = order_item.find_element(By.CSS_SELECTOR, 'p.leading.text-sm.leading-normal.text-\\[\\#1d1d1b\\]')
-            print(f"Order Date: {date_element.text.strip()}")
-            
-            # Total
-            total_elements = order_item.find_elements(By.CSS_SELECTOR, 'div.order-3.flex.w-1\\/2.lg\\:w-auto p')
-            for i in range(0, len(total_elements), 2):
-                if i + 1 < len(total_elements):
-                    total_label = total_elements[i]
-                    total_value = total_elements[i + 1]
-                    if "Total:" in total_label.text:
-                        print(f"Total Label: {total_label.text.strip()}")
-                        print(f"Total Value: {total_value.text.strip()}")
-                        break
+        # Check if the SVG element is present (with a short wait), else set button_ancestor None
+        svg_elements = WebDriverWait(driver, 3).until(
+            EC.presence_of_all_elements_located((
+                By.XPATH,
+                "//svg[@xmlns='http://www.w3.org/2000/svg' and @fill='none' "
+                "and @viewBox='0 0 11 18' and @width='1em' and @height='1em']"
+                "/path[@stroke='#000' and @stroke-width='2' and contains(@d, 'm1 17 8-8-8-8')]"
+            ))
+        ) if self.is_element_present(driver,
+            (By.XPATH,
+            "//svg[@xmlns='http://www.w3.org/2000/svg' and @fill='none' "
+            "and @viewBox='0 0 11 18' and @width='1em' and @height='1em']"
+            "/path[@stroke='#000' and @stroke-width='2' and contains(@d, 'm1 17 8-8-8-8')]")
+        ) else []
 
-        
+        button_ancestor = None
+        if svg_elements:
+            svg_elem = svg_elements[0]
+            button_ancestor = svg_elem.find_element(By.XPATH, "./ancestor::button[1]")
+
+        while True:
+            # Find all order items
+            order_items = driver.find_elements(By.CSS_SELECTOR, 'li.flex.flex-col.flex-wrap.items-start.justify-between.gap-y-3.border.border-\\[\\#C7BFB9\\].bg-white.p-6')
+            
+            # Loop through each order and extract values
+            for index, order_item in enumerate(order_items, 1):
+                print(f"\nOrder {index}:")
+                print("-" * 40)
+                
+                # Order Number
+                order_number_label = order_item.find_element(By.CSS_SELECTOR, 'p.mb-1.text-sm.font-medium.leading-normal')
+                order_number_value = order_item.find_element(By.CSS_SELECTOR, 'p.pl-1.text-sm.font-medium.leading-normal.text-\\[\\#1d1d1b\\]')
+                print(f"Order Number Label: {order_number_label.text.strip()}")
+                print(f"Order Number Value: {order_number_value.text.strip()}")
+                
+                # View Order Link
+                view_order_link = order_item.find_element(By.CSS_SELECTOR, 'a.text-sm.underline[data-discover="true"]')
+                print(f"View Order Link Text: {view_order_link.text.strip()}")
+                print(f"View Order Link Href: {view_order_link.get_attribute('href')}")
+                
+                # Status
+                status_elements = order_item.find_elements(By.CSS_SELECTOR, 'div.order-3.flex.w-20 p')
+                if len(status_elements) >= 2:
+                    status_label = status_elements[0]
+                    status_value = status_elements[1]
+                    print(f"Status Label: {status_label.text.strip()}")
+                    print(f"Status Value: {status_value.text.strip()}")
+                
+                # Date
+                date_element = order_item.find_element(By.CSS_SELECTOR, 'p.leading.text-sm.leading-normal.text-\\[\\#1d1d1b\\]')
+                print(f"Order Date: {date_element.text.strip()}")
+                
+                # Total
+                total_elements = order_item.find_elements(By.CSS_SELECTOR, 'div.order-3.flex.w-1\\/2.lg\\:w-auto p')
+                for i in range(0, len(total_elements), 2):
+                    if i + 1 < len(total_elements):
+                        total_label = total_elements[i]
+                        total_value = total_elements[i + 1]
+                        if "Total:" in total_label.text:
+                            print(f"Total Label: {total_label.text.strip()}")
+                            print(f"Total Value: {total_value.text.strip()}")
+                            break
+            
+            # Decide to click next page only if button_ancestor exists and is displayed
+            if button_ancestor and button_ancestor.is_displayed():
+                button_ancestor.click()
+                # Wait for page update
+                WebDriverWait(driver, 10).until(EC.staleness_of(order_items[0]))
+
+                # After refresh, check again if the SVG and button exist, update button_ancestor
+                if self.is_element_present(driver,
+                (By.XPATH,
+                    "//svg[@xmlns='http://www.w3.org/2000/svg' and @fill='none' "
+                    "and @viewBox='0 0 11 18' and @width='1em' and @height='1em']"
+                    "/path[@stroke='#000' and @stroke-width='2' and contains(@d, 'm1 17 8-8-8-8')]")):
+                    
+                    svg_elem = driver.find_element(By.XPATH,
+                        "//svg[@xmlns='http://www.w3.org/2000/svg' and @fill='none' "
+                        "and @viewBox='0 0 11 18' and @width='1em' and @height='1em']"
+                        "/path[@stroke='#000' and @stroke-width='2' and contains(@d, 'm1 17 8-8-8-8')]")
+                    button_ancestor = svg_elem.find_element(By.XPATH, "./ancestor::button[1]")
+                else:
+                    # No next page button found -> exit
+                    break
+            else:
+                # No next page button present -> exit loop
+                break
+
+    def is_element_present(self, driver, locator):
+        return len(driver.find_elements(*locator)) > 0
+
+
 if __name__ == "__main__":
     account_overview = Test_Account_Overview()
     driver = account_overview.setup_driver()
