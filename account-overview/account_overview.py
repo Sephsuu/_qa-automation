@@ -169,50 +169,76 @@ class Test_Account_Overview:
 
         self.populate_order(driver)
 
-        # Wait for the parent div container that wraps the pagination controls
-        pagination_div = WebDriverWait(driver, 10).until(
-            EC.visibility_of_element_located((By.CSS_SELECTOR, "div.flex.items-center.justify-center.gap-6"))
+        # Locator for the button containing the span with text 'Last 6 months'
+        button_locator = (
+            By.XPATH,
+            "//button[contains(@class, 'flex') and contains(@class, 'cursor-pointer') and .//span[text()='Last 6 months']]"
         )
 
-        # Inside this div, find the span with class "text-sm"
-        page_span = pagination_div.find_element(By.CSS_SELECTOR, "span.text-sm")
+        # Wait until the button is clickable, then click
+        button = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable(button_locator)
+        )
 
-        page_text = page_span.text.strip()  # e.g. "1 of 3"
-        print(f"Full page indicator text: {page_text}")
+        button.click()
+        print("Clicked the 'Last 6 months' button.")
 
-        # Extract active page number (before ' of ')
-        active_page = page_text.split(" of ")[0]
-        print(f"Current active page: {active_page}")
+        # XPath locator matching the button by class and exact text "2025"
+        button_locator = (
+            By.XPATH,
+            "//button[contains(@class, 'flex') and contains(@class, 'items-center') and contains(@class, 'overflow-hidden') and contains(@class, 'py-1') and contains(@class, 'text-sm') and contains(@class, 'hover:opacity-80') and normalize-space(text())='2025']"
+        )
+
+        # Wait until the button is clickable, then click it
+        button = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable(button_locator)
+        )
+
+        button.click()
+        print("Clicked the '2025' button.")
+        time.sleep(5)
 
 
-        
+        self.populate_order(driver, section='2025')
+
         print("\n" + "=" * 80)
         print("Order verification completed.")
 
     def populate_order(self, driver, section=''):
         print(section)
-        
-        # Check if the SVG element is present (with a short wait), else set button_ancestor None
-        svg_elements = WebDriverWait(driver, 3).until(
-            EC.presence_of_all_elements_located((
-                By.XPATH,
-                "//svg[@xmlns='http://www.w3.org/2000/svg' and @fill='none' "
-                "and @viewBox='0 0 11 18' and @width='1em' and @height='1em']"
-                "/path[@stroke='#000' and @stroke-width='2' and contains(@d, 'm1 17 8-8-8-8')]"
-            ))
-        ) if self.is_element_present(driver,
-            (By.XPATH,
-            "//svg[@xmlns='http://www.w3.org/2000/svg' and @fill='none' "
-            "and @viewBox='0 0 11 18' and @width='1em' and @height='1em']"
-            "/path[@stroke='#000' and @stroke-width='2' and contains(@d, 'm1 17 8-8-8-8')]")
-        ) else []
-
-        button_ancestor = None
-        if svg_elements:
-            svg_elem = svg_elements[0]
-            button_ancestor = svg_elem.find_element(By.XPATH, "./ancestor::button[1]")
-
         while True:
+            # Locator for the container div
+            container_locator = (By.CSS_SELECTOR, "div.flex.items-center.justify-center.gap-6")
+
+            # Wait until container is present
+            container = WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located(container_locator)
+            )
+
+            # Find all buttons inside the container div
+            buttons = container.find_elements(By.TAG_NAME, "button")
+
+            # Confirm there are at least 2 buttons
+            if len(buttons) >= 2:
+                second_button = buttons[1]  # zero-indexed: 0 is first button, 1 is second button
+
+                # Check if second button is displayed and enabled (clickable)
+                is_visible = second_button.is_displayed()
+                is_enabled = second_button.is_enabled()
+
+                print(f"Second button visible: {is_visible}")
+                print(f"Second button enabled (clickable): {is_enabled}")
+
+                if is_visible and is_enabled:
+                    print("Second button is clickable!")
+                    # Optionally click it:
+                    # second_button.click()
+                else:
+                    print("Second button is NOT clickable.")
+            else:
+                print(f"Only found {len(buttons)} button(s) inside the container. No second button available.")
+
+        
             # Find all order items
             order_items = driver.find_elements(By.CSS_SELECTOR, 'li.flex.flex-col.flex-wrap.items-start.justify-between.gap-y-3.border.border-\\[\\#C7BFB9\\].bg-white.p-6')
             
@@ -254,32 +280,17 @@ class Test_Account_Overview:
                             print(f"Total Label: {total_label.text.strip()}")
                             print(f"Total Value: {total_value.text.strip()}")
                             break
-            
-            # Decide to click next page only if button_ancestor exists and is displayed
-            if button_ancestor and button_ancestor.is_displayed():
-                button_ancestor.click()
-                # Wait for page update
-                WebDriverWait(driver, 10).until(EC.staleness_of(order_items[0]))
 
-                # After refresh, check again if the SVG and button exist, update button_ancestor
-                if self.is_element_present(driver,
-                (By.XPATH,
-                    "//svg[@xmlns='http://www.w3.org/2000/svg' and @fill='none' "
-                    "and @viewBox='0 0 11 18' and @width='1em' and @height='1em']"
-                    "/path[@stroke='#000' and @stroke-width='2' and contains(@d, 'm1 17 8-8-8-8')]")):
-                    
-                    svg_elem = driver.find_element(By.XPATH,
-                        "//svg[@xmlns='http://www.w3.org/2000/svg' and @fill='none' "
-                        "and @viewBox='0 0 11 18' and @width='1em' and @height='1em']"
-                        "/path[@stroke='#000' and @stroke-width='2' and contains(@d, 'm1 17 8-8-8-8')]")
-                    button_ancestor = svg_elem.find_element(By.XPATH, "./ancestor::button[1]")
-                else:
-                    # No next page button found -> exit
-                    break
-            else:
-                # No next page button present -> exit loop
+            print(is_enabled)
+
+            if not is_enabled:
                 break
 
+                
+            second_button.click()
+            time.sleep(2)
+        
+          
     def is_element_present(self, driver, locator):
         return len(driver.find_elements(*locator)) > 0
 
