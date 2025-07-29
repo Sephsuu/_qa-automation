@@ -135,6 +135,14 @@ class Test_Account_Overview:
         send_button.click()
 
         driver.switch_to.default_content()
+
+        div_locator = (By.CSS_SELECTOR, "div.mb-10")
+
+        div_element = WebDriverWait(driver, 10).until(EC.visibility_of_element_located(div_locator))
+
+        # Print the textual content inside the div (with spacing conserved)
+        print(f"\n{div_element.text}\n")
+        
         main_content_div = driver.find_element(By.ID, "mainContent")
 
         # Scroll the container to top using JavaScript
