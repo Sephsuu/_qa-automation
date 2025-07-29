@@ -111,6 +111,62 @@ class Test_Account_Overview:
         print(f"Checking Edit profile link href: {edit_profile_link.get_attribute('href')}")
         assert edit_profile_link.get_attribute('href').endswith('/account/edit'), "Edit profile link does not end with /account/edit"
 
+    def test_edit_profile(self, driver) -> None:
+        print("Navigating to Edit Profile page...")
+        # Click the Edit profile link
+        edit_profile_link = WebDriverWait(driver, 5).until(
+            EC.element_to_be_clickable((By.CSS_SELECTOR, 'a.flex.w-fit.items-center.gap-1.border-b[data-discover="true"]'))
+        )
+        edit_profile_link.click()
+        time.sleep(2)
+
+        # Wait for the Update Profile form
+        print("Waiting for Update Profile form...")
+        form = WebDriverWait(driver, 5).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, 'form.max-w-\[572px\]'))
+        )
+
+        # Edit First Name
+        print("Editing First Name...")
+        first_name_input = form.find_element(By.CSS_SELECTOR, 'input[name="firstName"]')
+        first_name_input.clear()
+        first_name_input.send_keys("NewFirst")
+
+        # Edit Last Name
+        print("Editing Last Name...")
+        last_name_input = form.find_element(By.CSS_SELECTOR, 'input[name="lastName"]')
+        last_name_input.clear()
+        last_name_input.send_keys("NewLast")
+
+        # Edit Phone
+        print("Editing Phone...")
+        phone_input = form.find_element(By.CSS_SELECTOR, 'input.PhoneInputInput[name="phone"]')
+        phone_input.clear()
+        phone_input.send_keys("+44 1234 567890")
+
+        # Edit Email (optional, but included for completeness)
+        print("Editing Email...")
+        email_input = form.find_element(By.CSS_SELECTOR, 'input[name="email"]')
+        email_input.clear()
+        email_input.send_keys("newemail@example.com")
+
+        # Edit Password
+        print("Editing Password...")
+        new_password_input = form.find_element(By.CSS_SELECTOR, 'input[name="newPassword"]')
+        new_password2_input = form.find_element(By.CSS_SELECTOR, 'input[name="newPassword2"]')
+        new_password_input.send_keys("NewP@ssword1234")
+        new_password2_input.send_keys("NewP@ssword1234")
+        print("Checking password confirmation matches...")
+        assert new_password_input.get_attribute('value') == new_password2_input.get_attribute('value'), "Passwords do not match!"
+
+        # Submit the form
+        print("Submitting the form...")
+        save_button = form.find_element(By.CSS_SELECTOR, 'button[type="submit"]')
+        save_button.click()
+        time.sleep(5)
+        print("Profile update submitted. Check for success message or redirection as needed.")
+        driver.execute_script("window.scrollTo(0, 0);")
+
     def test_verify_last_3_months_orders(self, driver):
         # Click the "Order history" link
         print('AAAAA')
@@ -304,7 +360,7 @@ if __name__ == "__main__":
     account_overview.verify_location_modal(driver)
     account_overview.test_verify_log_in(driver)
     account_overview.test_verify_account_content(driver)
-    print('ORDER HISTORY ORDER HISTORY ORDER HISTORY ORDER HISTORY ORDER HISTORY ORDER HISTORY')
+    account_overview.test_edit_profile(driver)
     account_overview.test_verify_last_3_months_orders(driver)
     driver.quit()
 
