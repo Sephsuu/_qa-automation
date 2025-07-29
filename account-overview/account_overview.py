@@ -52,7 +52,7 @@ class Test_Account_Overview:
         # Input valid password
         print("Entering valid password")
         password_input = driver.find_element(By.CSS_SELECTOR, 'input[name="password"]')
-        password_input.send_keys("P@ssword1234")
+        password_input.send_keys("P@ssword123")
 
         sign_in_button = driver.find_element(By.CSS_SELECTOR, 'form[action="/account/login"] button[type="submit"]')
         print("Clicking the Sign in immediately..") 
@@ -168,20 +168,10 @@ class Test_Account_Overview:
         driver.execute_script("window.scrollTo(0, 0);")
 
     def test_verify_last_3_months_orders(self, driver):
-        # Click the "Order history" link
-        print('AAAAA')
-        order_history_link = WebDriverWait(driver, 5).until(
-            EC.element_to_be_clickable((By.CSS_SELECTOR, 'a[data-discover="true"][href="/account/orders"]'))
-        )
-        print("Clicking 'Order history' link...")
-        order_history_link.click()
-    
-        # Findding the 6 months button
+        # Findding the 6 months button and clicks it
         last_6_months_button = WebDriverWait(driver, 10).until(
             EC.element_to_be_clickable((By.CSS_SELECTOR, r'button.flex.w-\[160px\].cursor-pointer.items-center.border.bg-white.px-5.py-4'))
         )
-
-        # Verify the button label matches "Last 6 months" to be sure it's the right one
         label_span = last_6_months_button.find_element(By.CSS_SELECTOR, 'span.mr-auto.text-sm')
         if label_span.text.strip() == "Last 6 months":
             print("Clicking 'Last 6 months' button...")
@@ -261,7 +251,6 @@ class Test_Account_Overview:
         print("Order verification completed.")
 
     def populate_order(self, driver, section=''):
-        print(section)
         while True:
             # Locator for the container div
             container_locator = (By.CSS_SELECTOR, "div.flex.items-center.justify-center.gap-6")

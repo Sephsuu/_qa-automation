@@ -1,170 +1,212 @@
+import time
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.edge.service import Service as EdgeService
+from selenium.webdriver.edge.options import Options as EdgeOptions
 
-def test_verify_last_3_months_orders(self, driver):
-    # Click the "Last 3 months" dropdown button
-    last_3_months_button = WebDriverWait(driver, 10).until(
-        EC.element_to_be_clickable((By.CSS_SELECTOR, 'button.flex.w-\\[160px\\].cursor-pointer.items-center.border.bg-white.px-5.py-4'))
-    )
-    print("Clicking 'Last 3 months' button...")
-    last_3_months_button.click()
-    
-    # Wait for orders to load
-    WebDriverWait(driver, 10).until(
-        EC.presence_of_element_located((By.CSS_SELECTOR, 'li.flex.flex-col.flex-wrap.items-start.justify-between.gap-y-3.border'))
-    )
-    
-    # Find all order items
-    order_items = driver.find_elements(By.CSS_SELECTOR, 'li.flex.flex-col.flex-wrap.items-start.justify-between.gap-y-3.border.border-\\[\\#C7BFB9\\].bg-white.p-6')
-    
-    print(f"Found {len(order_items)} orders in the last 3 months:")
-    print("=" * 80)
-    
-    # Loop through each order and extract values
-    for index, order_item in enumerate(order_items, 1):
-        print(f"\nOrder {index}:")
-        print("-" * 40)
-        
-        # Order Number
-        order_number_label = order_item.find_element(By.CSS_SELECTOR, 'p.mb-1.text-sm.font-medium.leading-normal')
-        order_number_value = order_item.find_element(By.CSS_SELECTOR, 'p.pl-1.text-sm.font-medium.leading-normal.text-\\[\\#1d1d1b\\]')
-        print(f"Order Number Label: {order_number_label.text.strip()}")
-        print(f"Order Number Value: {order_number_value.text.strip()}")
-        
-        # View Order Link
-        view_order_link = order_item.find_element(By.CSS_SELECTOR, 'a.text-sm.underline[data-discover="true"]')
-        print(f"View Order Link Text: {view_order_link.text.strip()}")
-        print(f"View Order Link Href: {view_order_link.get_attribute('href')}")
-        
-        # Status
-        status_elements = order_item.find_elements(By.CSS_SELECTOR, 'div.order-3.flex.w-20 p')
-        if len(status_elements) >= 2:
-            status_label = status_elements[0]
-            status_value = status_elements[1]
-            print(f"Status Label: {status_label.text.strip()}")
-            print(f"Status Value: {status_value.text.strip()}")
-        
-        # Date
-        date_element = order_item.find_element(By.CSS_SELECTOR, 'p.leading.text-sm.leading-normal.text-\\[\\#1d1d1b\\]')
-        print(f"Order Date: {date_element.text.strip()}")
-        
-        # Total
-        total_elements = order_item.find_elements(By.CSS_SELECTOR, 'div.order-3.flex.w-1\\/2.lg\\:w-auto p')
-        for i in range(0, len(total_elements), 2):
-            if i + 1 < len(total_elements):
-                total_label = total_elements[i]
-                total_value = total_elements[i + 1]
-                if "Total:" in total_label.text:
-                    print(f"Total Label: {total_label.text.strip()}")
-                    print(f"Total Value: {total_value.text.strip()}")
-                    break
-    
-    print("\n" + "=" * 80)
-    print("Order verification completed.")
 
-# Alternative method with more specific selectors
-def test_verify_orders_detailed(self, driver):
-    # Click the "Last 3 months" button
-    last_3_months_button = WebDriverWait(driver, 10).until(
-        EC.element_to_be_clickable((By.XPATH, "//button[contains(@class, 'flex w-[160px]') and .//span[text()='Last 3 months']]"))
-    )
-    print("Clicking 'Last 3 months' dropdown...")
-    last_3_months_button.click()
+class Test_Account_Overview:   
+    def test_nav_to_page(self, env) -> None:
+        driver = self.setup_driver()
+        url = "https://www.varley.com/account/login"
+        driver.get(url)
+        time.sleep(2)
+        
+        self.verify_location_modal(driver)
+        self.test_verify_log_in(driver)
+        # self.text_validate_elements(driver)
+        # self.test_validate_email(driver)
+        driver.quit()
     
-    # Wait for orders container to load
-    orders_container = WebDriverWait(driver, 10).until(
-        EC.presence_of_element_located((By.CSS_SELECTOR, 'ul, div[class*="orders"], div[class*="order-list"]'))
-    )
+    def setup_driver(self):
+        driver_path = r"C:\Users\Joseph\Downloads\edgedriver_win64\msedgedriver.exe"  # Your downloaded driver path
+        service = EdgeService(executable_path=driver_path)
+        options = EdgeOptions()
+        driver = webdriver.Edge(service=service, options=options)
+        return driver
     
-    # Find all order list items
-    order_items = driver.find_elements(By.CSS_SELECTOR, 'li.flex.flex-col.flex-wrap')
+    def verify_location_modal(self, driver) -> None:
+        print("Location Modal Test")
+        time.sleep(2)
+        geoip_modal = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, '[id^="headlessui-dialog-panel"]'))
+        )
+        if geoip_modal.is_displayed():
+            print("GeoIP modal is visible")
+            close_button = geoip_modal.find_element(By.CSS_SELECTOR, 'svg.cursor-pointer')
+            close_button.click()
+            time.sleep(2)
+            print("GeoIP modal is now closed. Continuing with the test\n")
+        else:
+            print("GeoIP modal is closed. Continuing with test.\n")
+            
+    def test_verify_log_in(self, driver) -> None:
     
-    print(f"\nFound {len(order_items)} orders for the last 3 months")
-    print("=" * 100)
-    
-    for idx, order in enumerate(order_items, 1):
-        print(f"\n📦 ORDER {idx}")
-        print("-" * 50)
-        
-        # Extract Order Number
-        order_number_section = order.find_element(By.CSS_SELECTOR, 'div.order-1.flex')
-        order_num_label = order_number_section.find_element(By.CSS_SELECTOR, 'p.mb-1.text-sm.font-medium')
-        order_num_value = order_number_section.find_element(By.CSS_SELECTOR, 'p.pl-1.text-sm.font-medium.text-\\[\\#1d1d1b\\]')
-        
-        print(f"🏷️  {order_num_label.text.strip()} {order_num_value.text.strip()}")
-        
-        # Extract View Order Link
-        view_order_section = order.find_element(By.CSS_SELECTOR, 'div.order-2.w-20')
-        view_order_link = view_order_section.find_element(By.CSS_SELECTOR, 'a.text-sm.underline')
-        
-        print(f"🔗 View Order: {view_order_link.text.strip()}")
-        print(f"🌐 Link URL: {view_order_link.get_attribute('href')}")
-        
-        # Extract Status
-        status_section = order.find_element(By.CSS_SELECTOR, 'div.order-3.flex.w-20')
-        status_elements = status_section.find_elements(By.CSS_SELECTOR, 'p')
-        if len(status_elements) >= 2:
-            print(f"📊 {status_elements[0].text.strip()} {status_elements[1].text.strip()}")
-        
-        # Extract Date
-        date_element = order.find_element(By.CSS_SELECTOR, 'p.leading.text-sm.leading-normal.text-\\[\\#1d1d1b\\]')
-        print(f"📅 Order Date: {date_element.text.strip()}")
-        
-        # Extract Total
-        total_sections = order.find_elements(By.CSS_SELECTOR, 'div.order-3.flex')
-        for section in total_sections:
-            paragraphs = section.find_elements(By.CSS_SELECTOR, 'p')
-            for i in range(0, len(paragraphs), 2):
-                if i + 1 < len(paragraphs) and "Total:" in paragraphs[i].text:
-                    print(f"💰 {paragraphs[i].text.strip()} {paragraphs[i + 1].text.strip()}")
-                    break
-    
-    print("\n" + "=" * 100)
-    print("✅ All orders processed successfully!")
+        # Input valid email
+        print("Entering valid email")
+        email_input = driver.find_element(By.CSS_SELECTOR, 'input[name="email"]')
+        email_input.send_keys("lourdes@ecrubox.com")
 
-# Simplified version focusing on key data extraction
-def test_extract_order_data(self, driver):
-    # Click Last 3 months filter
-    filter_button = WebDriverWait(driver, 10).until(
-        EC.element_to_be_clickable((By.XPATH, "//span[text()='Last 3 months']/parent::button"))
-    )
-    filter_button.click()
+        # Input valid password
+        print("Entering valid password")
+        password_input = driver.find_element(By.CSS_SELECTOR, 'input[name="password"]')
+        password_input.send_keys("P@ssword123")
+
+        sign_in_button = driver.find_element(By.CSS_SELECTOR, 'form[action="/account/login"] button[type="submit"]')
+        print("Clicking the Sign in immediately..") 
+        sign_in_button.click()
+        time.sleep(5)
+        
+        if driver.current_url == "https://www.varley.com/account":
+            print("Login successful. URL is correct.")
+            print("Customer is in the account page")
+        else:
+            print(f"Login failed or wrong redirect. Current URL: {driver.current_url}")
+            
+    def navigate_order_history(self, driver) -> None:
+        # Locator for the 'Order history' link using the data attribute and href and click the button
+        order_history_locator = (
+            By.CSS_SELECTOR, 
+            'a[data-discover="true"][href="/account/orders"]'
+        )
+        order_history_link = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable(order_history_locator)
+        )
+        order_history_link.click()
+        print("Clicked the 'Order history' link.")
+
+    def nagivate_to_last_3_months_orders(self, driver) -> None:
+        # Findding the 6 months button and clicks it
+        last_6_months_button = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.CSS_SELECTOR, r'button.flex.w-\[160px\].cursor-pointer.items-center.border.bg-white.px-5.py-4'))
+        )
+        label_span = last_6_months_button.find_element(By.CSS_SELECTOR, 'span.mr-auto.text-sm')
+        if label_span.text.strip() == "Last 6 months":
+            print("Clicking 'Last 6 months' button...")
+            last_6_months_button.click()
+        else:
+            print(f"Found button but label is '{label_span.text.strip()}', not 'Last 6 months'.")
+
+        # Find last 3 month button and clicks it
+        last_3_months_button = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((
+                By.XPATH, 
+                "//button[contains(@class, 'flex') and contains(@class, 'items-center') and contains(text(), 'Last 3 months')]"
+            ))
+        )
+        print("Clicking 'Last 3 months' button...")
+        last_3_months_button.click()
+        time.sleep(2)
+
+        self.populate_order(driver)
+
+        # Navigate to 6 months
+        last_3_months_button = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((
+                By.XPATH, 
+                "//button[contains(@class, 'flex') and contains(@class, 'cursor-pointer') and contains(@class, 'items-center') and ./span[text()='Last 3 months']]"
+            ))
+        )
+        print("Clicking 'Last 3 months' button...")
+        last_3_months_button.click()
+        last_6_months_button = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((
+                By.XPATH,
+                "//button[contains(@class, 'flex') and contains(@class, 'items-center') and contains(., 'Last 6 months')]"
+            ))
+        )
+        print("Clicking 'Last 6 months' button...")
+        last_6_months_button.click()
+        time.sleep(3)
+
+    def populate_order(self, driver, section=''):
+        active_order = 1
+        while True:
+            # Locator for the container div
+            container_locator = (By.CSS_SELECTOR, "div.flex.items-center.justify-center.gap-6")
+            container = WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located(container_locator)
+            )
+            buttons = container.find_elements(By.TAG_NAME, "button")
+            if len(buttons) >= 2:
+                second_button = buttons[1] 
+                is_visible = second_button.is_displayed()
+                is_enabled = second_button.is_enabled()
+                print(f"Second button visible: {is_visible}")
+                print(f"Second button enabled (clickable): {is_enabled}")
+                if is_visible and is_enabled:
+                    print("Second button is clickable!")
+                else:
+                    print("Second button is NOT clickable.")
+            else:
+                print(f"Only found {len(buttons)} button(s) inside the container. No second button available.")
+
+        
+            # Find all order items
+            order_items = driver.find_elements(By.CSS_SELECTOR, 'li.flex.flex-col.flex-wrap.items-start.justify-between.gap-y-3.border.border-\\[\\#C7BFB9\\].bg-white.p-6')
+            
+            # Loop through each order and extract values
+            for index, order_item in enumerate(order_items, 1):
+                # Locate the "View order" link inside this order item
+                view_order_link = order_item.find_element(By.CSS_SELECTOR, 'a.text-sm.underline[data-discover="true"]')
+                WebDriverWait(driver, 10).until(EC.element_to_be_clickable(view_order_link))
+                view_order_link.click()
+                print(f"Clicked 'View order' for order {index}")
+                time.sleep(5)
+
+                # Locator for the parent container div
+                parent_container_locator = (By.CSS_SELECTOR, "div.flex-grow.p-5.pb-15.pt-10.md\\:p-10.lg\\:p-20.lg\\:pb-20.lg\\:pt-20")
+                parent_container = driver.find_element(*parent_container_locator)
+                child_product_locator = "div.flex.gap-4.pb-6.md\\:gap-16.md\\:border-b.md\\:border-\\[\\#C7BFB9\\].md\\:pt-6.xl\\:gap-x-32"
+                product_children = parent_container.find_elements(By.CSS_SELECTOR, child_product_locator)
+                print(f"Found {len(product_children)} product item(s).")
+
+                for index, product in enumerate(product_children, 1):
+                    # Extract product name inside <dt>
+                    dt_elements = product.find_elements(By.TAG_NAME, "dt")
+                    if dt_elements:
+                        item_name = dt_elements[0].text.strip()
+                    else:
+                        item_name = "<No item name found>"
+
+                    # Check for image presence inside <a> tag with data-discover='true'
+                    a_tags = product.find_elements(By.CSS_SELECTOR, "a[data-discover='true']")
+                    if a_tags:
+                        images = a_tags[0].find_elements(By.TAG_NAME, "img")
+                        has_image = len(images) > 0
+                    else:
+                        has_image = False
+
+                    print(f"Product {index}: Name = '{item_name}', Has image = {has_image}")
+
+                driver.back()
+                time.sleep(2)
+
+            print(is_enabled)
+
+            if not is_enabled:
+                break
+
+                
+            second_button.click()
+            time.sleep(2)
+        
+          
+    def is_element_present(self, driver, locator):
+        return len(driver.find_elements(*locator)) > 0
+ 
     
-    # Wait and get all orders
-    WebDriverWait(driver, 10).until(
-        EC.presence_of_all_elements_located((By.CSS_SELECTOR, 'li[class*="flex flex-col"]'))
-    )
-    
-    orders = driver.find_elements(By.CSS_SELECTOR, 'li.flex.flex-col.flex-wrap.items-start.justify-between')
-    
-    print(f"ORDERS FOUND: {len(orders)}")
-    print("*" * 60)
-    
-    for i, order in enumerate(orders, 1):
-        print(f"\nORDER #{i}")
-        
-        # Order Number
-        order_num = order.find_element(By.XPATH, ".//p[contains(text(), 'Order number:')]/following-sibling::p").text
-        print(f"Order Number: {order_num}")
-        
-        # Status  
-        status = order.find_element(By.XPATH, ".//p[contains(text(), 'Status:')]/following-sibling::p").text
-        print(f"Status: {status}")
-        
-        # Date
-        date = order.find_element(By.CSS_SELECTOR, "p.leading.text-sm.leading-normal.text-\\[\\#1d1d1b\\]").text
-        print(f"Date: {date}")
-        
-        # Total
-        total = order.find_element(By.XPATH, ".//p[contains(text(), 'Total:')]/following-sibling::p").text
-        print(f"Total: {total}")
-        
-        # View Order Link
-        view_link = order.find_element(By.CSS_SELECTOR, "a[data-discover='true']")
-        print(f"View Order URL: {view_link.get_attribute('href')}")
-        
-        print("-" * 40)
+if __name__ == "__main__":
+    account_overview = Test_Account_Overview()
+    driver = account_overview.setup_driver()
+    url = "https://www.varley.com/account/login"
+    driver.get(url)
+    time.sleep(2)
+    account_overview.verify_location_modal(driver)
+    account_overview.test_verify_log_in(driver)
+    account_overview.navigate_order_history(driver)
+    account_overview.nagivate_to_last_3_months_orders(driver)
+    driver.quit()
+
