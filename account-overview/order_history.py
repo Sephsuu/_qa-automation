@@ -100,7 +100,7 @@ class Test_Account_Overview:
         last_3_months_button.click()
         time.sleep(2)
 
-        self.populate_order(driver)
+        self.populate_order(driver, section='last 3 months')
 
         # Navigate to 6 months
         last_3_months_button = WebDriverWait(driver, 10).until(
@@ -121,8 +121,9 @@ class Test_Account_Overview:
         last_6_months_button.click()
         time.sleep(3)
 
+        self.populate_order(driver, section='last 6 months')
+
     def populate_order(self, driver, section=''):
-        active_order = 1
         while True:
             # Locator for the container div
             container_locator = (By.CSS_SELECTOR, "div.flex.items-center.justify-center.gap-6")
@@ -181,8 +182,33 @@ class Test_Account_Overview:
 
                     print(f"Product {index}: Name = '{item_name}', Has image = {has_image}")
 
+
+
                 driver.back()
                 time.sleep(2)
+                if section == 'last 3 months':
+                    # Findding the 6 months button and clicks it
+                    last_6_months_button = WebDriverWait(driver, 10).until(
+                        EC.element_to_be_clickable((By.CSS_SELECTOR, r'button.flex.w-\[160px\].cursor-pointer.items-center.border.bg-white.px-5.py-4'))
+                    )
+                    label_span = last_6_months_button.find_element(By.CSS_SELECTOR, 'span.mr-auto.text-sm')
+                    if label_span.text.strip() == "Last 6 months":
+                        print("Clicking 'Last 6 months' button...")
+                        last_6_months_button.click()
+                    else:
+                        print(f"Found button but label is '{label_span.text.strip()}', not 'Last 6 months'.")
+
+                    # Find last 3 month button and clicks it
+                    last_3_months_button = WebDriverWait(driver, 10).until(
+                        EC.element_to_be_clickable((
+                            By.XPATH, 
+                            "//button[contains(@class, 'flex') and contains(@class, 'items-center') and contains(text(), 'Last 3 months')]"
+                        ))
+                    )
+                    print("Clicking 'Last 3 months' button...")
+                    last_3_months_button.click()
+                    time.sleep(2)
+
 
             print(is_enabled)
 
